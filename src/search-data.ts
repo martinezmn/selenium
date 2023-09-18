@@ -1,5 +1,7 @@
 import { By, ThenableWebDriver } from "selenium-webdriver";
 import { Mailer } from "./mailer";
+import dotenv from "dotenv";
+dotenv.config();
 
 export class SearchData {
   constructor(
@@ -21,13 +23,26 @@ export class SearchData {
           case "datetime":
             dateFound = await this.datetimePage();
             break;
+          default:
+            await this.initialPage();
+            break;
         }
+      } catch (error: any) {
+        console.error(error.message ?? JSON.stringify(error));
+      } finally {
         await this.driver.sleep(5000);
-      } catch (error) {
-        console.error(error);
       }
     }
     await this.mailer.sendFound();
+  }
+
+  private async initialPage(): Promise<void> {
+    await this.driver.get(String(process.env.DRIVER_URL));
+    await this.driver.sleep(10000);
+
+    const pElements = await this.driver.findElements(By.css("p"));
+    const linkElement = await pElements[5].findElement(By.css("a"));
+    await linkElement.click();
   }
 
   private async servicesPage(): Promise<void> {
@@ -35,7 +50,7 @@ export class SearchData {
       By.className("clsBktServiceName")
     );
 
-    await buttonElements[2].click();
+    await buttonElements[3].click();
   }
 
   private async datetimePage() {
